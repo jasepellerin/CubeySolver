@@ -1,8 +1,5 @@
 import dictionary from "../static/dictionary.json";
 
-const length = 4
-const width = 4
-const height = 4
 const allSiblings = {}
 
 const generateRandomLetter = () => {
@@ -11,7 +8,7 @@ const generateRandomLetter = () => {
 }
 
 // Make a multidimensional array of shape Array[length]Array[width]Array[height]
-const generateShape = (fillFunction = () => 'x') => (
+const generateShape = (fillFunction = () => 'x', length, width, height) => (
     [...Array(length).keys()].map(() => (
         [...Array(width).keys()].map(() => (
             [...Array(height).keys()].map(fillFunction)
@@ -20,13 +17,13 @@ const generateShape = (fillFunction = () => 'x') => (
 )
 
 // Fill shape with random letters
-const generateShapeWithLetters = () => (
-    generateShape(generateRandomLetter)
+const generateShapeWithLetters = ({length, width, height}) => (
+    generateShape(generateRandomLetter, length, width, height)
 )
 
 // Make a nicer shape string
 const prettifyShape = (shape) => {
-    var shapeString = ``
+    let shapeString = ``
     shape.forEach(slice => {
         slice.forEach(row => {
             row.forEach(letter => {
@@ -88,7 +85,7 @@ const generateSiblingMap = (shape) => {
     shape.forEach((slice, xIndex) => {
         slice.forEach((row, yIndex) => {
             row.forEach((letter, zIndex) => {
-                map[`${xIndex}, ${yIndex}, ${zIndex}`] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex)}
+                map[`(${xIndex}, ${yIndex}, ${zIndex})`] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex)}
             })
         })
     })
@@ -96,47 +93,47 @@ const generateSiblingMap = (shape) => {
     return map
 }
 
-const generateKeyFromCoordinate = (coordinate) => {
-    return `${coordinate[0]}, ${coordinate[1]}, ${coordinate[2]}`
-}
-
 // Test a specific coordinate to see if it matches the word
-const testCoordinateForWord = (shapeMap, coordinate, word, currentWord = '', usedCoordinates = new Set()) => {
-    const key = generateKeyFromCoordinate(coordinate)
-    if(usedCoordinates.has(key)) {
+const testCoordinateForWord = (shapeMap, coordinate, word, currentWord = '', usedCoordinates) => {
+    if(usedCoordinates.has(coordinate)) {
         return false
     }
 
     currentWord += shapeMap[coordinate].value
-    
-    // Word found
-    if (currentWord === word) {
-        return true
-    }
 
     // This coordinate does not work
     if (word.search(currentWord) === -1) {
         return false
     }
 
-    usedCoordinates.add(key)
+    usedCoordinates.add(coordinate)
+    
+    // Word found
+    if (currentWord === word) {
+        return usedCoordinates
+    }
+    
     return Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word, currentWord, usedCoordinates))
 }
 
 // Search for word in entire cube
-const testShapeForWord = (shapeMap, word) => (
-    Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word))
-)
-
-const testForAllWords = () => {
-    const start = Date.now()
-    console.log(`Starting...`)
-    const cube = generateShapeWithLetters()
-    console.log(prettifyShape(cube))
-    const cubeMap = generateSiblingMap(cube)
-    const foundWords = dictionary.filter(word => testShapeForWord(cubeMap, word))
-    console.log(`Took ${(Date.now() - start) / 1000} seconds to find ${foundWords.length} words`)
-    console.log(foundWords)
+const testShapeForWord = (shapeMap, word) => {
+    const usedCoordinates = new Set()
+    if (Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word, '', usedCoordinates))) {
+        return usedCoordinates
+    }
 }
 
-testForAllWords()
+const testForAllWords = (cubey) => {
+    const cubeMap = generateSiblingMap(cubey)
+    const result = new Map()
+    dictionary.forEach(word => {
+        const searchResult = testShapeForWord(cubeMap, word)
+        if (searchResult) {
+            result.set(word, searchResult)
+        }
+    })
+    return result
+}
+
+export { testForAllWords as default, prettifyShape, generateShapeWithLetters }
