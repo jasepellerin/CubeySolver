@@ -9,6 +9,7 @@ const Index = () => {
     const [output, setOutput] = useState('')
     const [testingAll, setTestingAll] = useState(false)
     const [testingSearchable, setTestingSearchable] = useState(false)
+    const [comparing, setComparing] = useState(false)
     const [sizeChanging, setSizeChanging] = useState(false)
     const [startTime, setStartTime] = useState(0)
     const [size, setSize] = useState({length: 4, width: 4, height: 4})
@@ -25,6 +26,13 @@ const Index = () => {
         setOutput(message)
         setTestingSearchable(true)
     }
+
+    const compareMethods = () => {
+        setStartTime(Date.now())
+        setOutput(message)
+        setComparing(true)
+    }
+
 
     const reset = () => {
         setOutput('')
@@ -58,10 +66,68 @@ const Index = () => {
         )
     }
 
+    const structureCompareResults = (resultsAll, resultsSearch, timeAll, timeSearch) => {
+        const styledResults = []
+        const sortedResultsAll = new Map([...resultsAll.entries()].sort())
+        const sortedResultsSearch = new Map([...resultsSearch.entries()].sort())
+        let message = `Both methods came up with ${sortedResultsAll.size} results.`
+
+        let differences = new Map()
+
+        const numberDifference = sortedResultsAll.size - sortedResultsSearch.size
+        if (numberDifference !== 0) {
+            message = `Dictionary Traverse had ${Math.abs(numberDifference)} ${numberDifference < 0 ? 'fewer' : 'more'} results than Cube Traverse`
+            sortedResultsAll.forEach((result, test) => {
+                if(sortedResultsSearch.has(test)) {
+                    sortedResultsAll.delete(test)
+                    sortedResultsSearch.delete(test)
+                }
+            })
+
+            differences = sortedResultsAll.size > 0 ? sortedResultsAll : sortedResultsSearch
+        }
+
+        differences.forEach((coordinateTree, word) => {
+            styledResults.push(<Result word={word} coordinateTree={coordinateTree} key={word}/>)
+        })
+
+        return (
+            <>
+                <p style={{whiteSpace: 'pre-line', unicodeBidi: 'embed'}}>
+                    Dictionary Traverse took {timeAll} seconds
+                </p>
+                <p style={{whiteSpace: 'pre-line', unicodeBidi: 'embed'}}>
+                    Cube Traverse took {timeSearch} seconds
+                </p>
+                <p style={{whiteSpace: 'pre-line', unicodeBidi: 'embed'}}>
+                    {message}
+                </p>
+                <div className='resultsContainer'>
+                    {styledResults}
+                </div>
+            </>
+        )
+    }
+
     useEffect(() => {
         reset()
         setSizeChanging(false)
     }, [size])
+
+    useEffect(() => {
+        if(!comparing) {
+            return
+        }
+
+        const resultsAll = testForAllWords(cube, size)
+        const timeAll = (Date.now() - startTime) / 1000
+        setStartTime(Date.now())
+        const resultsSearchable = testUsingSearchableDictionary(cube, size)
+        const timeSearch = (Date.now() - startTime) / 1000
+
+        setOutput(structureCompareResults(resultsAll, resultsSearchable, timeAll, timeSearch))
+        setComparing(false)
+    }, [comparing])
 
     useEffect(() => {
         if(!testingAll) {
@@ -99,8 +165,9 @@ const Index = () => {
                         <label htmlFor='width'>Width: <input type='number' id='width' value={size.width} onChange={handleSizeChange}></input></label>
                         <label htmlFor='height'>Height: <input type='number' id='height' value={size.height} onChange={handleSizeChange}></input></label>
                     </form>
-                    <button disabled={buttonsDisabled} onClick={testShapeWithAllWords}><h3>Find words</h3></button>
-                    <button disabled={buttonsDisabled} onClick={testShapeWithSearchable}><h3>Find words using searchable dictionary</h3></button>
+                    <button disabled={buttonsDisabled} onClick={testShapeWithAllWords}><h3>Traverse dictionary and search cube</h3></button>
+                    <button disabled={buttonsDisabled} onClick={testShapeWithSearchable}><h3>Traverse cube and search dictionary</h3></button>
+                    <button disabled={buttonsDisabled} onClick={compareMethods}><h3>Compare methods</h3></button>
                     <button disabled={buttonsDisabled} onClick={reset}><h3>Reset</h3></button>
                 </article>
                 <article>

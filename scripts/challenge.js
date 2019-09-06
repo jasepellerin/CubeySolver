@@ -46,7 +46,8 @@ const generateShape = (fillFunction = () => 'x', length, width, height) => (
 
 // Fill shape with random letters
 const generateShapeWithLetters = ({length, width, height}) => (
-    generateShape(generateRandomLetter, length, width, height)
+    // generateShape(generateRandomLetter, length, width, height)
+    JSON.parse('[[["x","i","u","t"],["s","f","h","b"],["s","h","y","x"],["p","i","k","g"]],[["s","u","m","s"],["a","i","n","l"],["p","r","c","k"],["z","t","l","f"]],[["a","j","x","e"],["y","w","d","d"],["c","o","z","f"],["l","a","k","f"]],[["t","w","k","s"],["h","n","d","j"],["g","z","y","o"],["q","s","c","r"]]]')
 )
 
 // Make a nicer shape string
@@ -237,7 +238,7 @@ const testForAllWords = (cubey, size) => {
 
 // Get results by searching down the dictionary and seeing if the letters are in the cube
 const testUsingSearchableDictionary = (cubey, size) => {
-    // console.log(JSON.stringify(cubey))
+    console.log(JSON.stringify(cubey))
     const cubeMap = generateSiblingMap(cubey, size)
     const searchableDictionary = getSearchableDictionary()
     const results = new Map()
