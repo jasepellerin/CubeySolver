@@ -74,6 +74,8 @@ const getPossibleCoordinateValuesAlongDimension = (coordinate, dimension) => {
 
 // Get an array of sibling coordinates
 const getSiblings = (x, y, z, { length, width, height }) => {
+    const size = `${length}x${width}x${height}`
+
     // Not in cube
     if (x < 0 || x >= length || y < 0 || y >= width || z < 0 || z >= height) {
         return []
@@ -82,8 +84,8 @@ const getSiblings = (x, y, z, { length, width, height }) => {
     // Memoize
     const key = `${x}, ${y}, ${z}`
 
-    if (allSiblings[key]) {
-        return allSiblings[key]
+    if (allSiblings[size] && allSiblings[size][key]) {
+        return allSiblings[size][key]
     }
 
     const siblings = []
@@ -101,7 +103,7 @@ const getSiblings = (x, y, z, { length, width, height }) => {
         })
     })
 
-    allSiblings[key] = siblings
+    allSiblings[size] = { key: siblings }
 
     return siblings
 }
@@ -177,6 +179,9 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     }
 
     // See if letter has frequency
+    if (!siblingMap[coordinate]) {
+        console.log(siblingMap, coordinate)
+    }
     const currentLetter = siblingMap[coordinate].value
     const tempDictionaryPointer = dictionaryPointer ? `${dictionaryPointer}.${currentLetter}` : `${currentLetter}`
     if(!get(searchableDictionary, tempDictionaryPointer)) {
@@ -201,7 +206,7 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     const currentLetterFrequency = get(searchableDictionary, dictionaryPointer).frequency
     if(currentLetterFrequency > childFrequency) {
         results.set(dictionaryPointer.replace(/\W/g, ''), usedCoordinates)
-        set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
+        // set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
     }
 
     // If children still have frequency, check for more matches
