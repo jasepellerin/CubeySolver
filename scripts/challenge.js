@@ -1,17 +1,29 @@
 import dictionary from "../static/dictionary.json";
+import { get, set } from "lodash";
 
 const allSiblings = {}
+
+// Increment characters of a word in a searchable dictionary
+const incrementCharacterFrequency = (dictionary, string) => {
+    const resultObject = new Object(dictionary)
+    const characters = string.split('')
+    for (var i = 0, n = characters.length; i <= n; ++i) {
+        const searchString = characters.slice(0, i)
+        const childObject = get(resultObject, searchString)
+        if (!childObject) {
+            set(resultObject, searchString, { frequency: 1 })
+        } else {
+            set(resultObject, searchString, {...childObject, frequency: childObject.frequency + 1 })
+        }
+    }
+    return resultObject;
+}
 
 // Create a multi-level array showing each character's use number in each position
 const generateSearchableDictionary = () => {
     const searchableDictionary = {}
     dictionary.forEach(word => {
-        const characters = word.toLowerCase().split('')
-        let dictionaryPointer = ''
-        for(let i = 0; i < word.length; i++) {
-            dictionaryPointer = `${dictionaryPointer}[${characters[i]}]`
-            searchableDictionary[dictionaryPointer] ? searchableDictionary[dictionaryPointer] += 1 : searchableDictionary[dictionaryPointer] = 1
-        }
+        incrementCharacterFrequency(searchableDictionary, word.toLowerCase())
     })
 
     return searchableDictionary
@@ -94,6 +106,11 @@ const getSiblings = (x, y, z, { length, width, height }) => {
     return siblings
 }
 
+// Make a key using a coord
+const generateCoordKey = ({x, y, z}) => {
+    return `(${x}, ${y}, ${z})`
+}
+
 // Generate a map from every coordinate to every sibling coordinate
 const generateSiblingMap = (shape, size) => {
     const map = {}
@@ -101,7 +118,7 @@ const generateSiblingMap = (shape, size) => {
     shape.forEach((slice, xIndex) => {
         slice.forEach((row, yIndex) => {
             row.forEach((letter, zIndex) => {
-                map[`(${xIndex}, ${yIndex}, ${zIndex})`] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex, size)}
+                map[generateCoordKey({x: xIndex, y: yIndex, z: zIndex})] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex, size)}
             })
         })
     })
@@ -152,9 +169,39 @@ const getSearchableDictionary = () => {
     return dictionary
 }
 
-// Get results by searching down the dictionary and seeing if the letters are in the cube
-const traverseSearchableDictionary = (siblingMap, searchableDictionary, results) => {
-    console.log(siblingMap)
+// Get results by traversing cubeys and seeing if useful words can be formed
+const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictionary, results, usedCoordinates = new Set(), dictionaryPointer = '') => {
+    // See if letter has frequency
+    const currentLetter = siblingMap[coordinate].value
+    const tempDictionaryPointer = dictionaryPointer ? `${dictionaryPointer}.${currentLetter}` : `${currentLetter}`
+    if(!get(searchableDictionary, tempDictionaryPointer)) {
+        return false
+    }
+
+    // Continue with used letters
+    dictionaryPointer = tempDictionaryPointer
+    usedCoordinates.add(coordinate)
+
+    // Check child frequency
+    const childFrequency = Object.keys(get(searchableDictionary, dictionaryPointer)).reduce(
+        (total, key) => (
+            key === 'frequency'
+                ? total
+                : total + get(searchableDictionary, `${dictionaryPointer}.${key}.frequency`)
+        ),
+        0
+    )
+
+    // If children have less frequency, we're on a word
+    if(get(searchableDictionary, dictionaryPointer).frequency > childFrequency) {
+        results.set(dictionaryPointer.replace(/\W/g, ''), usedCoordinates)
+    }
+
+    if(childFrequency > 0) {
+        siblingMap[coordinate].siblings.forEach(sibling =>
+            traverseSearchableDictionary(generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), siblingMap, searchableDictionary, results, usedCoordinates, dictionaryPointer)
+        )
+    }
 }
 
 // Search for all dictionary words in the cube, returning results objects for each
@@ -175,7 +222,12 @@ const testUsingSearchableDictionary = (cubey, size) => {
     const cubeMap = generateSiblingMap(cubey, size)
     const searchableDictionary = getSearchableDictionary()
     const results = new Map()
-    return traverseSearchableDictionary(cubeMap, searchableDictionary, results)
+
+    // Search siblings for useful letters
+    Object.keys(cubeMap).forEach(coordinate => {
+        traverseSearchableDictionary(coordinate, cubeMap, searchableDictionary, results)
+    })
+    return results
 }
 
 export { testForAllWords, testUsingSearchableDictionary, prettifyShape, generateShapeWithLetters }

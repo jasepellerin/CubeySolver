@@ -31,7 +31,6 @@ const Index = () => {
     }
 
     const handleSizeChange = ({target}) => {
-        console.log({...size, [target.id]: parseInt(target.value)})
         setSize({...size, [target.id]: parseInt(target.value)})
     }
 
@@ -73,7 +72,7 @@ const Index = () => {
         }
 
         const results = testUsingSearchableDictionary(cube, size)
-        setOutput(results)
+        setOutput(structureResults(results))
         setTestingSearchable(false)
     }, [testingSearchable])
 
