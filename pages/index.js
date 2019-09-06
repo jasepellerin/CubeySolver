@@ -11,7 +11,7 @@ const Index = () => {
     const [testingSearchable, setTestingSearchable] = useState(false)
     const [sizeChanging, setSizeChanging] = useState(false)
     const [startTime, setStartTime] = useState(0)
-    const [size, setSize] = useState({length: 4, width: 2, height: 2})
+    const [size, setSize] = useState({length: 4, width: 4, height: 4})
     const [cube, setCube] = useState(generateShapeWithLetters(size))
 
     const testShapeWithAllWords = () => {
@@ -43,7 +43,8 @@ const Index = () => {
 
     const structureResults = (results) => {
         const styledResults = []
-        results.forEach((coordinateTree, word) => {
+        const sortedResults = new Map([...results.entries()].sort())
+        sortedResults.forEach((coordinateTree, word) => {
             styledResults.push(<Result word={word} coordinateTree={coordinateTree} key={word}/>)
         })
 
