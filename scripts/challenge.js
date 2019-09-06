@@ -2,6 +2,22 @@ import dictionary from "../static/dictionary.json";
 
 const allSiblings = {}
 
+// Create a multi-level array showing each character's use number in each position
+const generateSearchableDictionary = () => {
+    const searchableDictionary = {}
+    dictionary.forEach(word => {
+        const characters = word.toLowerCase().split('')
+        let dictionaryPointer = ''
+        for(let i = 0; i < word.length; i++) {
+            dictionaryPointer = `${dictionaryPointer}[${characters[i]}]`
+            searchableDictionary[dictionaryPointer] ? searchableDictionary[dictionaryPointer] += 1 : searchableDictionary[dictionaryPointer] = 1
+        }
+    })
+
+    return searchableDictionary
+}
+
+// Select a random lowercase letter
 const generateRandomLetter = () => {
     const characters = 'abcdefghijklmnopqrstuvwxyz'
     return characters.split('')[Math.floor(Math.random() * characters.length)]
@@ -45,7 +61,7 @@ const getPossibleCoordinateValuesAlongDimension = (coordinate, dimension) => {
 }
 
 // Get an array of sibling coordinates
-const getSiblings = (x, y, z) => {
+const getSiblings = (x, y, z, { length, width, height }) => {
     // Not in cube
     if (x < 0 || x >= length || y < 0 || y >= width || z < 0 || z >= height) {
         return []
@@ -79,13 +95,13 @@ const getSiblings = (x, y, z) => {
 }
 
 // Generate a map from every coordinate to every sibling coordinate
-const generateSiblingMap = (shape) => {
+const generateSiblingMap = (shape, size) => {
     const map = {}
 
     shape.forEach((slice, xIndex) => {
         slice.forEach((row, yIndex) => {
             row.forEach((letter, zIndex) => {
-                map[`(${xIndex}, ${yIndex}, ${zIndex})`] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex)}
+                map[`(${xIndex}, ${yIndex}, ${zIndex})`] = {value: letter, siblings: getSiblings(xIndex, yIndex, zIndex, size)}
             })
         })
     })
@@ -124,16 +140,42 @@ const testShapeForWord = (shapeMap, word) => {
     }
 }
 
-const testForAllWords = (cubey) => {
-    const cubeMap = generateSiblingMap(cubey)
-    const result = new Map()
+// Create or consume dictionary in localStorage
+const getSearchableDictionary = () => {
+    const key = 'dictionary'
+    let dictionary = JSON.parse(localStorage.getItem(key));
+    if (!dictionary) {
+        dictionary = generateSearchableDictionary()
+        localStorage.setItem(key, JSON.stringify(dictionary))
+    }
+
+    return dictionary
+}
+
+// Get results by searching down the dictionary and seeing if the letters are in the cube
+const traverseSearchableDictionary = (siblingMap, searchableDictionary, results) => {
+    console.log(siblingMap)
+}
+
+// Search for all dictionary words in the cube, returning results objects for each
+const testForAllWords = (cubey, size) => {
+    const cubeMap = generateSiblingMap(cubey, size)
+    const results = new Map()
     dictionary.forEach(word => {
         const searchResult = testShapeForWord(cubeMap, word)
         if (searchResult) {
-            result.set(word, searchResult)
+            results.set(word, searchResult)
         }
     })
-    return result
+    return results
 }
 
-export { testForAllWords as default, prettifyShape, generateShapeWithLetters }
+// Get results by searching down the dictionary and seeing if the letters are in the cube
+const testUsingSearchableDictionary = (cubey, size) => {
+    const cubeMap = generateSiblingMap(cubey, size)
+    const searchableDictionary = getSearchableDictionary()
+    const results = new Map()
+    return traverseSearchableDictionary(cubeMap, searchableDictionary, results)
+}
+
+export { testForAllWords, testUsingSearchableDictionary, prettifyShape, generateShapeWithLetters }

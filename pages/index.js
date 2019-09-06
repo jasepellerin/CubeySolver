@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head';
-import challenge, { generateShapeWithLetters, prettifyShape } from "../scripts/challenge.js"
+import { generateShapeWithLetters, prettifyShape, testForAllWords, testUsingSearchableDictionary } from "../scripts/challenge.js"
 import Result from '../components/result'
 
-let start
 const message = 'Running...'
 
 const Index = () => {
     const [output, setOutput] = useState('')
+    const [testingAll, setTestingAll] = useState(false)
+    const [testingSearchable, setTestingSearchable] = useState('')
+    const [startTime, setStartTime] = useState(0)
     const [size, setSize] = useState({length: 4, width: 4, height: 4})
     const [cube, setCube] = useState(generateShapeWithLetters(size))
 
-    const testShape = () => {
-        start = Date.now()
+    const testShapeWithAllWords = () => {
+        setStartTime(Date.now())
         setOutput(message)
+        setTestingAll(true)
+    }
+
+    const testShapeWithSearchable = () => {
+        setStartTime(Date.now())
+        setOutput(message)
+        setTestingSearchable(true)
     }
 
     const reset = () => {
@@ -26,31 +35,47 @@ const Index = () => {
         setSize({...size, [target.id]: parseInt(target.value)})
     }
 
-    useEffect(() => {
-        reset()
-    }, [size])
+    const prettyCube = prettifyShape(cube)
 
-    useEffect(() => {
-        if (output !== message) {
-            return
-        }
-
-        const result = challenge(cube)
+    const structureResults = (results) => {
         const styledResults = []
-        result.forEach((coordinateTree, word) => {
+        results.forEach((coordinateTree, word) => {
             styledResults.push(<Result word={word} coordinateTree={coordinateTree} key={word}/>)
         })
-        setOutput(
+
+        return (
             <>
-                <p style={{whiteSpace: 'pre-line', unicodeBidi: 'embed'}}>Took {(Date.now() - start) / 1000} seconds to find {result.size} words in the cubey: </p>
+                <p style={{whiteSpace: 'pre-line', unicodeBidi: 'embed'}}>Took {(Date.now() - startTime) / 1000} seconds to find {results.size} words in the cubey: </p>
                 <div className='resultsContainer'>
                     {styledResults}
                 </div>
             </>
         )
-    }, [output, cube])
+    }
 
-    const prettyCube = prettifyShape(cube)
+    useEffect(() => {
+        reset()
+    }, [size])
+
+    useEffect(() => {
+        if(!testingAll) {
+            return
+        }
+
+        const results = testForAllWords(cube, size)
+        setOutput(structureResults(results))
+        setTestingAll(false)
+    }, [testingAll])
+
+    useEffect(() => {
+        if(!testingSearchable) {
+            return
+        }
+
+        const results = testUsingSearchableDictionary(cube, size)
+        setOutput(results)
+        setTestingSearchable(false)
+    }, [testingSearchable])
 
     return (
         <main>
@@ -66,7 +91,8 @@ const Index = () => {
                         <label htmlFor='width'>Width: <input type='number' id='width' value={size.width} onChange={handleSizeChange}></input></label>
                         <label htmlFor='height'>Height: <input type='number' id='height' value={size.height} onChange={handleSizeChange}></input></label>
                     </form>
-                    <button onClick={testShape}><h3>Find words</h3></button>
+                    <button onClick={testShapeWithAllWords}><h3>Find words</h3></button>
+                    <button onClick={testShapeWithSearchable}><h3>Find words using searchable dictionary</h3></button>
                     <button onClick={reset}><h3>Reset</h3></button>
                 </article>
                 <article>
