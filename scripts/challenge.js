@@ -138,7 +138,7 @@ const testCoordinateForWord = (shapeMap, coordinate, word, currentWord = '', use
     currentWord += shapeMap[coordinate].value
 
     // This coordinate does not work
-    if (word.search(currentWord) === -1) {
+    if (word.search(currentWord) !== 0) {
         return false
     }
 
@@ -155,10 +155,13 @@ const testCoordinateForWord = (shapeMap, coordinate, word, currentWord = '', use
 // Search for word in entire cube
 const testShapeForWord = (shapeMap, word) => {
     const usedCoordinates = new Set()
-    if (Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word, '', usedCoordinates))) {
+    if (Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word.toLowerCase(), '', usedCoordinates))) {
         return usedCoordinates
     }
+
+    return false
 }
+
 
 // Create or consume dictionary in localStorage
 const getSearchableDictionary = () => {
@@ -180,7 +183,6 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     }
 
     // See if letter has frequency
-    console.log(siblingMap, coordinate)
     const currentLetter = siblingMap[coordinate].value
     const tempDictionaryPointer = dictionaryPointer ? `${dictionaryPointer}.${currentLetter}` : `${currentLetter}`
     if(!get(searchableDictionary, tempDictionaryPointer)) {
@@ -205,7 +207,6 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     const currentLetterFrequency = get(searchableDictionary, dictionaryPointer).frequency
     if(currentLetterFrequency > childFrequency) {
         results.set(dictionaryPointer.replace(/\W/g, ''), usedCoordinates)
-        set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
     }
 
     // If children still have frequency, check for more matches
@@ -231,7 +232,6 @@ const testForAllWords = (cubey, size) => {
 
 // Get results by searching down the dictionary and seeing if the letters are in the cube
 const testUsingSearchableDictionary = (cubey, size) => {
-    console.log(JSON.stringify(cubey))
     const cubeMap = generateSiblingMap(cubey, size)
     const searchableDictionary = getSearchableDictionary()
     const results = new Map()
