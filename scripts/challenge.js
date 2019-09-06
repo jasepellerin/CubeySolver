@@ -171,6 +171,11 @@ const getSearchableDictionary = () => {
 
 // Get results by traversing cubeys and seeing if useful words can be formed
 const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictionary, results, usedCoordinates = new Set(), dictionaryPointer = '') => {
+    // Don't reuse letters
+    if (usedCoordinates.has(coordinate)) {
+        return false
+    }
+
     // See if letter has frequency
     const currentLetter = siblingMap[coordinate].value
     const tempDictionaryPointer = dictionaryPointer ? `${dictionaryPointer}.${currentLetter}` : `${currentLetter}`
@@ -178,7 +183,7 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
         return false
     }
 
-    // Continue with used letters
+    // Continue with letters that have frequency
     dictionaryPointer = tempDictionaryPointer
     usedCoordinates.add(coordinate)
 
@@ -193,13 +198,16 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     )
 
     // If children have less frequency, we're on a word
-    if(get(searchableDictionary, dictionaryPointer).frequency > childFrequency) {
+    const currentLetterFrequency = get(searchableDictionary, dictionaryPointer).frequency
+    if(currentLetterFrequency > childFrequency) {
         results.set(dictionaryPointer.replace(/\W/g, ''), usedCoordinates)
+        set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
     }
 
+    // If children still have frequency, check for more matches
     if(childFrequency > 0) {
         siblingMap[coordinate].siblings.forEach(sibling =>
-            traverseSearchableDictionary(generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), siblingMap, searchableDictionary, results, usedCoordinates, dictionaryPointer)
+            traverseSearchableDictionary(generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), siblingMap, searchableDictionary, results, new Set(usedCoordinates), dictionaryPointer)
         )
     }
 }

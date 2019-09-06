@@ -31,6 +31,9 @@ const Index = () => {
     }
 
     const handleSizeChange = ({target}) => {
+        if (target.value <= 0) {
+            return
+        }
         setSize({...size, [target.id]: parseInt(target.value)})
     }
 
