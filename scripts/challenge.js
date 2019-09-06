@@ -46,7 +46,8 @@ const generateShape = (fillFunction = () => 'x', length, width, height) => (
 
 // Fill shape with random letters
 const generateShapeWithLetters = ({length, width, height}) => (
-    generateShape(generateRandomLetter, length, width, height)
+    // generateShape(generateRandomLetter, length, width, height)
+    JSON.parse('[[["n","s"],["a","o"]],[["n","m"],["r","m"]],[["k","k"],["t","w"]],[["y","x"],["b","q"]]]')
 )
 
 // Make a nicer shape string
@@ -148,7 +149,7 @@ const testCoordinateForWord = (shapeMap, coordinate, word, currentWord = '', use
         return usedCoordinates
     }
     
-    return Object.keys(shapeMap).some(coordinate => testCoordinateForWord(shapeMap, coordinate, word, currentWord, usedCoordinates))
+    return shapeMap[coordinate].siblings.some(sibling => testCoordinateForWord(shapeMap, generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), word, currentWord, usedCoordinates))
 }
 
 // Search for word in entire cube
@@ -179,9 +180,7 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     }
 
     // See if letter has frequency
-    if (!siblingMap[coordinate]) {
-        console.log(siblingMap, coordinate)
-    }
+    console.log(siblingMap, coordinate)
     const currentLetter = siblingMap[coordinate].value
     const tempDictionaryPointer = dictionaryPointer ? `${dictionaryPointer}.${currentLetter}` : `${currentLetter}`
     if(!get(searchableDictionary, tempDictionaryPointer)) {
@@ -206,7 +205,7 @@ const traverseSearchableDictionary = (coordinate, siblingMap, searchableDictiona
     const currentLetterFrequency = get(searchableDictionary, dictionaryPointer).frequency
     if(currentLetterFrequency > childFrequency) {
         results.set(dictionaryPointer.replace(/\W/g, ''), usedCoordinates)
-        // set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
+        set(searchableDictionary, `${dictionaryPointer}.frequency`, currentLetterFrequency - 1)
     }
 
     // If children still have frequency, check for more matches
@@ -232,6 +231,7 @@ const testForAllWords = (cubey, size) => {
 
 // Get results by searching down the dictionary and seeing if the letters are in the cube
 const testUsingSearchableDictionary = (cubey, size) => {
+    console.log(JSON.stringify(cubey))
     const cubeMap = generateSiblingMap(cubey, size)
     const searchableDictionary = getSearchableDictionary()
     const results = new Map()

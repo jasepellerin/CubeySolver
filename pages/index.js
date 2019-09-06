@@ -11,7 +11,7 @@ const Index = () => {
     const [testingSearchable, setTestingSearchable] = useState(false)
     const [sizeChanging, setSizeChanging] = useState(false)
     const [startTime, setStartTime] = useState(0)
-    const [size, setSize] = useState({length: 4, width: 4, height: 4})
+    const [size, setSize] = useState({length: 4, width: 2, height: 2})
     const [cube, setCube] = useState(generateShapeWithLetters(size))
 
     const testShapeWithAllWords = () => {
