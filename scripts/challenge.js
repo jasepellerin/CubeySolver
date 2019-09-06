@@ -46,8 +46,7 @@ const generateShape = (fillFunction = () => 'x', length, width, height) => (
 
 // Fill shape with random letters
 const generateShapeWithLetters = ({length, width, height}) => (
-    // generateShape(generateRandomLetter, length, width, height)
-    JSON.parse('[[["x","i","u","t"],["s","f","h","b"],["s","h","y","x"],["p","i","k","g"]],[["s","u","m","s"],["a","i","n","l"],["p","r","c","k"],["z","t","l","f"]],[["a","j","x","e"],["y","w","d","d"],["c","o","z","f"],["l","a","k","f"]],[["t","w","k","s"],["h","n","d","j"],["g","z","y","o"],["q","s","c","r"]]]')
+    generateShape(generateRandomLetter, length, width, height)
 )
 
 // Make a nicer shape string
@@ -85,7 +84,11 @@ const getSiblings = (x, y, z, { length, width, height }) => {
     // Memoize
     const key = `${x}, ${y}, ${z}`
 
-    if (allSiblings[size] && allSiblings[size][key]) {
+    if (!allSiblings[size]) {
+        allSiblings[size] = {}
+    }
+
+    if (allSiblings[size][key]) {
         return allSiblings[size][key]
     }
 
@@ -104,7 +107,7 @@ const getSiblings = (x, y, z, { length, width, height }) => {
         })
     })
 
-    allSiblings[size] = { key: siblings }
+    allSiblings[size][key] = siblings
 
     return siblings
 }
@@ -134,6 +137,7 @@ const testCoordinateForWord = (shapeMap, coordinate, word, currentWord, usedCoor
     if (currentWord === '') {
         usedCoordinates.clear()
     }
+
     if(usedCoordinates.has(coordinate)) {
         return false
     }
@@ -152,7 +156,9 @@ const testCoordinateForWord = (shapeMap, coordinate, word, currentWord, usedCoor
         return usedCoordinates
     }
     
-    return shapeMap[coordinate].siblings.some(sibling => testCoordinateForWord(shapeMap, generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), word, currentWord, usedCoordinates))
+    const result = shapeMap[coordinate].siblings.some(sibling => testCoordinateForWord(shapeMap, generateCoordKey({x: sibling[0], y: sibling[1], z: sibling[2]}), word, currentWord, new Set(usedCoordinates)))
+    
+    return result;
 }
 
 // Search for word in entire cube
@@ -165,9 +171,11 @@ const testShapeForWord = (shapeMap, word) => {
     return false
 }
 
+// console.log(allSiblings)
 // const testSize = {length: 4, width: 3, height: 3}
 // const testMap = generateSiblingMap(generateShapeWithLetters(testSize), testSize)
-// console.log(testMap, testShapeForWord(testMap, 'attack'))
+// console.log(allSiblings)
+// console.log(testMap, testShapeForWord(testMap, 'awkward'))
 
 // Create or consume dictionary in localStorage
 const getSearchableDictionary = () => {
@@ -238,7 +246,7 @@ const testForAllWords = (cubey, size) => {
 
 // Get results by searching down the dictionary and seeing if the letters are in the cube
 const testUsingSearchableDictionary = (cubey, size) => {
-    console.log(JSON.stringify(cubey))
+    // console.log(JSON.stringify(cubey))
     const cubeMap = generateSiblingMap(cubey, size)
     const searchableDictionary = getSearchableDictionary()
     const results = new Map()
